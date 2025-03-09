@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+google-genai
+ollama
+langchain
+langchain-community
+langchain-openai
+pandasai
+langchain-google-genai 
