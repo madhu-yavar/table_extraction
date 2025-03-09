@@ -5,8 +5,7 @@ import pdfplumber
 import pandas as pd
 from io import BytesIO
 
-# ✅ DeepSeek API Configuration
-API_KEY = "sk-..."   
+
 API_URL = "https://api.deepseek.com/v1/chat/completions"  
 
 # ✅ Set Streamlit Page Layout
@@ -115,6 +114,20 @@ st.markdown("""
                 margin-top: 10px; margin-bottom: 10px;">
     </div>
 """, unsafe_allow_html=True)
+
+# ✅ DeepSeek API Configuration
+
+# ✅ Sidebar API Key Input
+st.sidebar.markdown("<div class='sidebar-title'>🔑 Enter DeepSeek API Key</div>", unsafe_allow_html=True)
+API_KEY = st.sidebar.text_input("API Key", type="password", help="Enter your DeepSeek API key securely.")
+
+# ✅ Store API Key in Session State
+if API_KEY:
+    st.session_state["API_KEY"] = API_KEY
+elif "API_KEY" in st.session_state:
+    API_KEY = st.session_state["API_KEY"]
+else:
+    st.sidebar.warning("⚠️ Please enter your DeepSeek API key.")
 
 # ✅ Sidebar Styling (Ensures Proper Alignment & Modern Look)
 st.sidebar.markdown("""
@@ -323,6 +336,7 @@ if process_button and pdf_file:
             st.session_state.transactions = pd.DataFrame(all_transactions)
 
 # ✅ Display Transactions (Persistent)
+# # ✅ Display Transactions (Persistent)
 if st.session_state.transactions is not None:
     df = st.session_state.transactions
 
@@ -336,8 +350,13 @@ if st.session_state.transactions is not None:
 
     selected_desc = st.selectbox("Select a Transaction to Correct", df["Description"].unique(), help="Choose a transaction from the list")
 
+    # Retrieve selected transaction details
     filtered_row = df[df["Description"] == selected_desc].iloc[0]
+
+    # Editable Fields
     correct_vendor = st.text_input("Correct Vendor", filtered_row["Vendor Name"], help="Enter the correct vendor name")
+    correct_deposits = st.number_input("Deposits_Credits", value=filtered_row["Deposits_Credits"], step=0.01, help="Update deposit amount if incorrect")
+    correct_withdrawals = st.number_input("Withdrawals_Debits", value=filtered_row["Withdrawals_Debits"], step=0.01, help="Update withdrawal amount if incorrect")
     comments = st.text_area("Additional Comments (Optional)", help="Provide any additional feedback")
 
     # ✅ Columns for Buttons (Side-by-Side Layout)
@@ -352,11 +371,11 @@ if st.session_state.transactions is not None:
 
     # ✅ Feedback Submission Logic
     if submit_feedback:
-        feedback_entry = [[datetime.date.today(), selected_desc, correct_vendor, filtered_row["Vendor Name"], comments]]
+        feedback_entry = [[datetime.date.today(), selected_desc, correct_vendor, filtered_row["Vendor Name"], correct_deposits, correct_withdrawals, comments]]
         save_feedback(feedback_entry)
 
         # Update Transactions in Session State
-        df.loc[df["Description"] == selected_desc, "Vendor Name"] = correct_vendor
+        df.loc[df["Description"] == selected_desc, ["Vendor Name", "Deposits_Credits", "Withdrawals_Debits"]] = correct_vendor, correct_deposits, correct_withdrawals
         st.session_state.transactions = df
 
         st.success("✅ Feedback submitted successfully!")
