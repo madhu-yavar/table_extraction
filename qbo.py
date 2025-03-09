@@ -7,7 +7,7 @@ from PyPDF2 import PdfReader
 from io import BytesIO
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-gemini_api_key = "AIzaSyAe8rheF4wv2ZHJB2YboUhyyVlM2y0vmlk"  # Replace with your actual API key
+gemini_api_key = ".."  # Replace with your actual API key
 
 
 # App title and description
