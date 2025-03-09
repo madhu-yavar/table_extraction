@@ -6,7 +6,7 @@ import pandas as pd
 from io import BytesIO
 
 # ✅ DeepSeek API Configuration
-API_KEY = "sk-740590a4f21542c8bf4cf5887048553e"   
+API_KEY = "sk-..."   
 API_URL = "https://api.deepseek.com/v1/chat/completions"  
 
 # ✅ Set Streamlit Page Layout
