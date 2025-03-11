@@ -1,9 +1,14 @@
 streamlit
 pandas
 numpy
-pdfplumber
 requests
+pdfplumber
+PyPDF2
+plotly
+langchain-google-genai
+google-generativeai
 datetime
 openpyxl
-base64                      
-os                          
+re
+io
+csv
