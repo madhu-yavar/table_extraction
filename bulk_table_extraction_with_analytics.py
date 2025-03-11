@@ -7,6 +7,7 @@ from io import BytesIO
 import requests
 from langchain_google_genai import ChatGoogleGenerativeAI
 import re
+import os
 import plotly.express as px
 import csv
 
@@ -88,6 +89,22 @@ def extract_text_from_pdf(pdf_file):
     except Exception as e:
         st.error(f"❌ Error reading PDF: {e}")
         return []
+    
+def save_qa_log(entry):
+    log_file = "qa_history_log.csv"  # ✅ Define log file path
+
+    # ✅ Check if file exists, create with headers if not
+    file_exists = os.path.isfile(log_file)
+
+    with open(log_file, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+
+        # ✅ Write headers only if the file is newly created
+        if not file_exists:
+            writer.writerow(["Date", "Document", "Question", "Answer"])
+
+        # ✅ Append new entry
+        writer.writerow(entry)
 
 
 def save_feedback(feedback_entry, filename="feedback_log.csv"):
@@ -204,7 +221,7 @@ with tab1:
     st.subheader("📄 Single Document Processing")
     pdf_file = st.file_uploader("📄 Upload a Transaction Statement (PDF)", type=["pdf"], key="single_pdf")
     vendor_file = st.file_uploader("📂 Upload a Vendor List (CSV or Excel)", type=["csv", "xls", "xlsx"], key="single_vendor")
-    process_button = st.button("🚀 Process Document", key="single_process")
+    process_button = st.button("Process Document", key="single_process")
 
     if process_button and pdf_file and vendor_file:
         vendor_list = load_vendor_list(vendor_file)
@@ -291,23 +308,27 @@ with tab1:
                 #st.download_button("⬇ Download Updated Transactions CSV", csv_data, "transactions.csv", "text/csv", help="Download the updated transactions")
 
 
-# ✅ Bulk Processing (Page-by-Page, Separate CSV for Each PDF)
+
+# ✅ Bulk Processing (Supports Folder Upload & Separate CSV for Each PDF)
 with tab2:
     st.subheader("📂 Bulk Transaction Processing")
+
+    # ✅ File Uploads (Folder Selection & PDF Upload)
+    uploaded_folder = st.file_uploader("📂 Select PDF Files from a Folder", type=["pdf"], accept_multiple_files=True, key="bulk_folder")
     vendor_file = st.file_uploader("📂 Upload a Vendor List (CSV or Excel)", type=["csv", "xls", "xlsx"], key="bulk_vendor")
-    pdf_files = st.file_uploader("📄 Upload Multiple PDFs", type=["pdf"], accept_multiple_files=True, key="bulk_pdfs")
+
     process_bulk_button = st.button("🚀 Process Bulk Documents", key="bulk_process")
 
-    if process_bulk_button and pdf_files and vendor_file:
+    if process_bulk_button and uploaded_folder and vendor_file:
         vendor_list = load_vendor_list(vendor_file)
         progress_bar = st.progress(0)
 
-        total_pages = sum(len(extract_text_from_pdf(BytesIO(pdf_file.getvalue()))) for pdf_file in pdf_files)
+        total_pages = sum(len(extract_text_from_pdf(BytesIO(pdf_file.getvalue()))) for pdf_file in uploaded_folder)
         processed_pages = 0
 
         session_bulk_csvs = {}  # ✅ Store separate DataFrames per PDF
 
-        for pdf_idx, pdf_file in enumerate(pdf_files):
+        for pdf_idx, pdf_file in enumerate(uploaded_folder):
             pdf_data = pdf_file.getvalue()  # ✅ Read once into memory
             text_pages = extract_text_from_pdf(BytesIO(pdf_data))  # ✅ Use BytesIO(pdf_data)
 
@@ -319,7 +340,7 @@ with tab2:
             transactions_per_pdf = []  # ✅ Store transactions for this PDF only
 
             for i, (page_num, page_text) in enumerate(text_pages):
-                st.info(f"📄 Processing File {pdf_idx + 1}/{len(pdf_files)} - Page {page_num}/{len(text_pages)}")
+                st.info(f"📄 Processing File {pdf_idx + 1}/{len(uploaded_folder)} - Page {page_num}/{len(text_pages)}")
                 transactions = process_and_categorize(page_text, vendor_list, api_key, ai_model)
 
                 # ✅ Add filename to each transaction
@@ -396,75 +417,158 @@ with tab2:
                 # ✅ Show updated download button
                 st.download_button(f"⬇ Download Updated {selected_doc} CSV", csv_data, f"{selected_doc}.csv", "text/csv")
 
+# ✅ Ensure session state for Q&A history
+if "qa_history" not in st.session_state:
+    st.session_state.qa_history = []
+
+# ✅ Ensure session state for storing bulk CSVs
+if "bulk_csvs" not in st.session_state:
+    st.session_state.bulk_csvs = {}
+
 # ✅ Analytics Dashboard (Supports Multiple CSVs)
 with tab3:
-    st.subheader("📊 AI Analytics Dashboard")
+    st.markdown("<h2 style='color:#004AAD;'>📊 AI Analytics Dashboard</h2>", unsafe_allow_html=True)
 
-    # ✅ Allow user to select CSV for analysis
+    # ✅ Gather available CSVs
+    available_csvs = {}
+
     if "transactions" in st.session_state and not st.session_state.transactions.empty:
-        available_csvs = {"Single Document": st.session_state.transactions}
-    else:
-        available_csvs = {}
+        available_csvs["Single Document"] = st.session_state.transactions
 
     if "bulk_csvs" in st.session_state and st.session_state.bulk_csvs:
         available_csvs.update(st.session_state.bulk_csvs)  # ✅ Add bulk CSVs
 
+    # ✅ No CSVs available
     if not available_csvs:
         st.warning("⚠ No transactions available. Process a document first.")
     else:
+        # ✅ Select CSV for analysis
         selected_csv = st.selectbox("📂 Select CSV for Analysis", list(available_csvs.keys()), key="analytics_csv")
         df = available_csvs[selected_csv]
 
         # ✅ Ensure valid dates before conversion
         df["Date"] = pd.to_datetime(df["Date"], format="%m/%d/%Y", errors="coerce")
-        df = df.dropna(subset=["Date"])  # ✅ Remove rows where 'Date' couldn't be parsed
+        df = df.dropna(subset=["Date"])  # ✅ Remove invalid dates
 
-        # ✅ Transactions Over Time (Month-wise Graph)
-        st.markdown("### 📊 Transactions Over Time (Monthly)")
+        # ✅ Transactions Over Time (Month-wise)
+        st.markdown(f"<h4 style='color:#1976D2;'>📊 Transactions Over Time (Monthly) - {selected_csv}</h4>", unsafe_allow_html=True)
         df_grouped = df.groupby(df["Date"].dt.to_period("M"))[["Deposits_Credits", "Withdrawals_Debits"]].sum().reset_index()
         df_grouped["Date"] = df_grouped["Date"].astype(str)
         fig = px.line(df_grouped, x="Date", y=["Deposits_Credits", "Withdrawals_Debits"], title="Transactions Over Time (Monthly)")
         st.plotly_chart(fig, use_container_width=True)
 
-        # ✅ Transactions Over Time (Day-wise Graph)
-        st.markdown("### 📆 Transactions Over Time (Daily)")
+        # ✅ Transactions Over Time (Day-wise)
+        st.markdown(f"<h4 style='color:#1976D2;'>📆 Transactions Over Time (Daily) - {selected_csv}</h4>", unsafe_allow_html=True)
         df_grouped_day = df.groupby(df["Date"])[["Deposits_Credits", "Withdrawals_Debits"]].sum().reset_index()
         fig_day = px.line(df_grouped_day, x="Date", y=["Deposits_Credits", "Withdrawals_Debits"], title="Transactions Over Time (Daily)")
         st.plotly_chart(fig_day, use_container_width=True)
 
-        # ✅ Vendor-Based Summary (Graph)
-        st.markdown("### 📌 Vendor-Based Summary")
+        # ✅ Vendor-Based Summary
+        st.markdown("<h4 style='color:#1976D2;'>📌 Vendor-Based Summary</h4>", unsafe_allow_html=True)
         vendor_summary = df.groupby("Vendor Name")[["Deposits_Credits", "Withdrawals_Debits"]].sum().reset_index()
         fig_bar = px.bar(vendor_summary, x="Vendor Name", y=["Deposits_Credits", "Withdrawals_Debits"], title="Top Vendors by Transactions", barmode="group")
         st.plotly_chart(fig_bar, use_container_width=True)
 
-        # ✅ AI Chatbot (Below Graphs)
-        st.markdown("### 💬 Ask AI About Transactions")
-        query = st.text_input("🔍 Enter your question (e.g., 'What is the highest withdrawal?')", key="query_analytics")
+        # ✅ AI Chatbot (Below Graphs) - Fixed Alignment
+        st.markdown("""
+            <style>
+            .chat-container {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 10px;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+                margin-top: 20px;
+                text-align: center;
+            }
+            .chat-header {
+                font-size: 18px;
+                font-weight: bold;
+                color: #004AAD;
+                text-align: center;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
-        if st.button("🧠 Get Insights", key="query_btn"):
-            if query.strip():
-                context = f"Analyze the following transaction data:\n{df.to_json(orient='records', indent=2)}"
-                full_prompt = f"{context}\nUser Question: {query}"
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        st.markdown('<p class="chat-header">💬 Ask About Transactions</p>', unsafe_allow_html=True)
 
-                try:
-                    if ai_model == "DeepSeek":
-                        payload = {"model": "deepseek-chat", "messages": [{"role": "user", "content": full_prompt}], "temperature": 0}
-                        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-                        response = requests.post("https://api.deepseek.com/v1/chat/completions", headers=headers, json=payload)
+        query = st.text_area("🔍 Enter your question...", key="query_analytics", height=100)
 
-                        if response.status_code == 200:
-                            response_text = response.json()["choices"][0]["message"]["content"]
-                        else:
-                            st.error(f"❌ DeepSeek API error: {response.status_code}")
-                            response_text = "Error fetching response from DeepSeek."
+        col1, col2, col3 = st.columns([4, 2, 2])  # ✅ Adjusted button alignment
+        with col2:
+            ask_button = st.button(" Get Insights", key="query_btn")
 
-                    elif ai_model == "Gemini":
-                        gemini = ChatGoogleGenerativeAI(model="gemini-2.0-pro-exp-02-05", google_api_key=api_key, temperature=0)
-                        response = gemini.invoke(full_prompt)
-                        response_text = response.content if response else "No response received."
+        #st.markdown('</div>', unsafe_allow_html=True)  # ✅ Close chat container
 
-                    st.markdown(f"**🤖 AI Response:** {response_text}")
+        # ✅ AI Processing & Response
+        if ask_button and query.strip():
+            st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
-                except Exception as e:
-                    st.error(f"❌ Error generating insights: {e}")
+            context = f"Analyze the following transaction data:\n{df.to_json(orient='records', indent=2)}"
+            full_prompt = f"""
+            {context}
+            User Question: {query}
+
+            **Instructions for Response Formatting:**
+            - **Provide clear, structured financial insights.**
+            - **Summarize key findings concisely.**
+            - **Use structured tables for numerical analysis where possible.**
+            - **If needed, return JSON Table format for structured display.**
+            """
+
+            try:
+                if ai_model == "DeepSeek":
+                    payload = {"model": "deepseek-chat", "messages": [{"role": "user", "content": full_prompt}], "temperature": 0}
+                    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+                    response = requests.post("https://api.deepseek.com/v1/chat/completions", headers=headers, json=payload)
+
+                    if response.status_code == 200:
+                        response_text = response.json()["choices"][0]["message"]["content"]
+                    else:
+                        st.error(f"❌ DeepSeek API error: {response.status_code}")
+                        response_text = "Error fetching response from DeepSeek."
+
+                elif ai_model == "Gemini":
+                    gemini = ChatGoogleGenerativeAI(model="gemini-2.0-pro-exp-02-05", google_api_key=api_key, temperature=0)
+                    response = gemini.invoke(full_prompt)
+                    response_text = response.content if response else "No response received."
+
+                # ✅ Detect if response contains JSON table
+                if response_text.strip().startswith("{") or response_text.strip().startswith("["):
+                    try:
+                        table_data = json.loads(response_text)  # ✅ Parse JSON
+                        df_response = pd.DataFrame(table_data)  # ✅ Convert to DataFrame
+                        st.markdown("#### Table")
+                        st.dataframe(df_response, use_container_width=True)
+                    except:
+                        st.markdown(f"**📝 Summary:** {response_text}")  # ✅ Fallback to text response
+                else:
+                    st.markdown(f"**📝 Summary:** {response_text}")  # ✅ Direct text response
+
+                # ✅ Store Q&A in session state & log it
+                if "qa_history" not in st.session_state:
+                    st.session_state.qa_history = []
+
+                entry = {
+                    "Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Document": selected_csv,
+                    "Question": query,
+                    "Answer": response_text
+                }
+                st.session_state.qa_history.append(entry)
+
+                # ✅ Save Q&A log (without download option)
+                save_qa_log(entry)  
+
+            except Exception as e:
+                st.error(f"❌ Error generating insights: {e}")
+
+            st.markdown('</div>', unsafe_allow_html=True)  # ✅ Close chat container
+
+        # ✅ Q&A History (Expandable)
+        with st.expander("📜 View Q&A History"):
+            if "qa_history" in st.session_state and st.session_state.qa_history:
+                qa_df = pd.DataFrame(st.session_state.qa_history)
+                st.dataframe(qa_df, use_container_width=True)
+            else:
+                st.info("📝 No Q&A history yet. Ask a question to start logging interactions!")
