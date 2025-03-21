@@ -474,10 +474,27 @@ with tab3:
         """, unsafe_allow_html=True)
         
         st.markdown("""
-                <div class="chat-container">
-                    <p class="chat-header">💬 Ask About Transactions</p>
-                </div>
-            """, unsafe_allow_html=True)
+            <style>
+                .chat-container {
+                    width: 60%;  /* Adjust width as needed */
+                    max-width: 500px;  /* Prevent it from getting too large */
+                    margin: 0 auto;  /* Center it */
+                    padding: 10px;
+                    background-color: #f0f2f6; 
+                    border-radius: 10px;
+                    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+                }
+                .chat-header {
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 18px;
+                }
+            </style>
+            <div class="chat-container">
+                <p class="chat-header">💬 Ask About Transactions</p>
+            </div>
+        """, unsafe_allow_html=True)
+
 
 
         #st.markdown('<div class="chat-container">', unsafe_allow_html=True)
