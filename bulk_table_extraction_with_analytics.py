@@ -472,9 +472,16 @@ with tab3:
             }
             </style>
         """, unsafe_allow_html=True)
+        
+        st.markdown("""
+                <div class="chat-container">
+                    <p class="chat-header">💬 Ask About Transactions</p>
+                </div>
+            """, unsafe_allow_html=True)
 
-        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-        st.markdown('<p class="chat-header">💬 Ask About Transactions</p>', unsafe_allow_html=True)
+
+        #st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        #st.markdown('<p class="chat-header">💬 Ask About Transactions</p>', unsafe_allow_html=True)
 
         query = st.text_area("🔍 Enter your question...", key="query_analytics", height=100)
 
