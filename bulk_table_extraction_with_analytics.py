@@ -15,7 +15,7 @@ import csv
 st.set_page_config(page_title="GKM- QBO - Statement Processor", page_icon="📄", layout="wide")
 
 # ✅ Sidebar: Logo, API Key, AI Model Selection
-st.image("/Users/yavar/Desktop/EDA BOT/yavarlogo.png", width=100)
+st.image("yavarlogo.png", width=100)
 
 # ✅ App Title (Fixed at the Top)
 st.markdown("""
