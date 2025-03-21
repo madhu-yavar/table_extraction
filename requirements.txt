@@ -9,6 +9,3 @@ langchain-google-genai
 google-generativeai
 datetime
 openpyxl
-re
-io
-csv
