@@ -12,34 +12,19 @@ import plotly.express as px
 import csv
 
 # ✅ Set Streamlit Page Layout
-st.set_page_config(page_title="GKM- QBO - Statement Processor", page_icon="📄", layout="wide")
+st.set_page_config(page_title="Transation Processor and Analytics Agent", page_icon="📄", layout="wide")
 
 # ✅ Sidebar: Logo, API Key, AI Model Selection
-st.image("yavarlogo.png", width=100)
+#st.image("yavarlogo.png", width=100)
 
 # ✅ App Title (Fixed at the Top)
 st.markdown("""
     <div style="text-align: center; padding: 10px 0;">
-        <h1 style="font-size: 32px; font-weight: bold; color: #004AAD;">GKM- QBO - Statement Processor</h1>
+        <h1 style="font-size: 32px; font-weight: bold; color: #004AAD;">Transation Processor and Analytics Agent</h1>
         <p style="font-size: 14px; font-weight: 400; color: #666;">Extract & categorize transactions with AI</p>
     </div>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-    <div style="
-        padding: 10px;
-        background-color: #FFDADA;
-        color: #8B0000;
-        font-size: 15px;
-        font-weight: 600;
-        border-radius: 8px;
-        border-left: 6px solid #D32F2F;
-        text-align: center;
-        margin: 15px 0;
-        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);">
-        ⚠️ Please mask any <b>Personally Identifiable Information (PII)</b> before uploading the PDF.
-    </div>
-""", unsafe_allow_html=True)
 # ✅ Push Copyright Notice to the Bottom
 st.markdown("""
     <style>
