@@ -44,8 +44,7 @@ st.markdown("""
     <div class="footer">© 2025 Copyright Yavar TechWorks Pte Ltd., All rights reserved.</div>
 """, unsafe_allow_html=True)
 
-# ✅ Sidebar: Logo, API Key, AI Model Selection
-st.image("/Users/yavar/Desktop/EDA BOT/yavarlogo.png", width=100)
+
 # ✅ AI Model Selection in Sidebar (Defined ONCE)
 st.sidebar.header("Model Selection")
 ai_model = st.sidebar.radio("Choose AI Model", ["DeepSeek", "Gemini"], horizontal=True, key="ai_model_select")
