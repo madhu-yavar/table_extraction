@@ -182,7 +182,7 @@ def process_and_categorize(text, vendor_list, api_key, ai_model):
         try:
             response = gemini.invoke(prompt)
             #Debugging: Show Raw API Response
-            st.text_area("🔍 Gemini Raw Response", response.content, height=200)
+            #st.text_area("🔍 Gemini Raw Response", response.content, height=200)
             if not response or not response.content.strip():
                 st.error("❌ Gemini API returned an empty response.")
                 return []
@@ -214,7 +214,8 @@ with tab1:
         progress_bar = st.progress(0)  # Progress indicator
 
         for i, (page_num, page_text) in enumerate(text_pages):
-            st.info(f"📄 Processing Page {page_num} of {len(text_pages)}...")
+            #st.info(f"📄 Processing Page {page_num} of {len(text_pages)}...")
+            st.info(f"📄 Processing Page {page_num}...")
             transactions = process_and_categorize(page_text, vendor_list, api_key, ai_model)
             all_transactions.extend(transactions)
             progress_bar.progress((i + 1) / len(text_pages))
