@@ -14,8 +14,7 @@ import csv
 # ✅ Set Streamlit Page Layout
 st.set_page_config(page_title="Transation Processor and Analytics Agent", page_icon="📄", layout="wide")
 
-# ✅ Sidebar: Logo, API Key, AI Model Selection
-st.image("table_extraction/yavarlogo.png", width=100)
+
 
 # ✅ App Title (Fixed at the Top)
 st.markdown("""
