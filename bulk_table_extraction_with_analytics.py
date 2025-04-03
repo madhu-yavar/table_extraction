@@ -12,7 +12,7 @@ import plotly.express as px
 import csv
 
 # ✅ Set Streamlit Page Layout
-st.set_page_config(page_title="Transation Processor and Analytics Agent", page_icon="📄", layout="wide")
+st.set_page_config(page_title="Transaction Processor and Analytics Agent", page_icon="📄", layout="wide")
 
 
 
