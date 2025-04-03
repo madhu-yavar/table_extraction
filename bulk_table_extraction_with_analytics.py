@@ -19,7 +19,7 @@ st.set_page_config(page_title="Transaction Processor and Analytics Agent", page_
 # ✅ App Title (Fixed at the Top)
 st.markdown("""
     <div style="text-align: center; padding: 10px 0;">
-        <h1 style="font-size: 32px; font-weight: bold; color: #004AAD;">Transation Processor and Analytics Agent</h1>
+        <h1 style="font-size: 32px; font-weight: bold; color: #004AAD;">Transaction Processor and Analytics Agent</h1>
         <p style="font-size: 14px; font-weight: 400; color: #666;">Extract & categorize transactions with AI</p>
     </div>
 """, unsafe_allow_html=True)
